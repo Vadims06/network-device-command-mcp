@@ -1,4 +1,4 @@
-# AGENTS.md — device-command-mcp
+# AGENTS.md — network-device-command-mcp
 
 Guide for an AI agent working **on this repository**. Read
 [README.md](README.md) first for the tool list.
@@ -6,9 +6,9 @@ Guide for an AI agent working **on this repository**. Read
 ## What belongs here — and what does not
 
 This repo is a protocol adapter. Its whole job is: MCP tool call in, one
-`device-command-proxy` operation out, JSON back unchanged.
+`network-device-command-proxy` operation out, JSON back unchanged.
 
-| Belongs here | Belongs in device-command-proxy |
+| Belongs here | Belongs in network-device-command-proxy |
 |---|---|
 | Tool registration and signatures | Operation allowlist |
 | Tool docstrings (the LLM reads them) | Argument validation |
@@ -29,7 +29,7 @@ drift, and the proxy's copy is the one that is actually authoritative.
 
 ## Adding a tool
 
-Only after the operation exists in `device-command-proxy`.
+Only after the operation exists in `network-device-command-proxy`.
 
 1. Add an `async def` to `DeviceCommandTools` whose parameters mirror the
    proxy's operation arguments, plus `request_id: str = ""`.
