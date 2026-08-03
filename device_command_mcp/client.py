@@ -20,7 +20,6 @@ class ExecutionProxyClient:
             headers={"Authorization": f"Bearer {token}"},
             timeout=35.0,
         )
-        self._owns_client = client is None
 
     async def execute(
         self,
@@ -40,7 +39,3 @@ class ExecutionProxyClient:
         )
         response.raise_for_status()
         return response.json()
-
-    async def close(self) -> None:
-        if self._owns_client:
-            await self._client.aclose()
