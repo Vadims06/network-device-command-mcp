@@ -21,6 +21,7 @@ validation and vendor-neutral responses.
 
 | Tool | Arguments | Purpose |
 |---|---|---|
+| `get_bgp_vrf_inventory` | `devices[]` | BGP VRF names, RD/RTs, and address families |
 | `get_ospf_neighbors` | `devices[]` | OSPF neighbor list and states |
 | `get_ospf_neighbor_detail` | `devices[]` | Neighbor states with area and flap counters |
 | `get_ospf_status` | `devices[]` | OSPF process and per-area status |

@@ -12,6 +12,17 @@ class Client:
         return {"request_id": request_id, "results": []}
 
 
+def test_bgp_vrf_inventory_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_bgp_vrf_inventory(["router1"], "session-1"))
+
+    assert client.calls == [
+        ("get_bgp_vrf_inventory", ["router1"], None, "session-1")
+    ]
+
+
 def test_interface_tool_maps_to_one_semantic_operation_without_command_text():
     client = Client()
     tools = DeviceCommandTools(client)
