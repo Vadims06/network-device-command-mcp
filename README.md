@@ -30,6 +30,13 @@ validation and vendor-neutral responses.
 | `get_route` | `devices[]`, `prefix` | Routing entries for one prefix |
 | `get_rsvp_lsps` | `devices[]` | RSVP-TE tunnel sessions (IOS XR) |
 | `get_vrf_detail` | `devices[]` | VRF inventory (IOS XR) |
+| `get_bgp_summary` | `devices[]` | BGP session summary per address family (IOS XR) |
+| `get_bgp_neighbor_detail` | `devices[]` | Detailed BGP neighbor state (IOS XR) |
+| `get_isis_neighbors` | `devices[]` | IS-IS adjacencies (IOS XR) |
+| `get_isis_interface` | `devices[]` | IS-IS per-interface state and per-level metrics (IOS XR) |
+| `get_isis_database` | `devices[]` | IS-IS LSDB summary, per level (IOS XR) |
+| `get_mpls_forwarding` | `devices[]` | MPLS label forwarding table (IOS XR) |
+| `get_ldp_neighbors` | `devices[]` | LDP session state (IOS XR) |
 
 Every tool also takes an optional `request_id` used for correlation in the
 proxy's audit log. `devices` accepts 1–20 NetBox device names and results come

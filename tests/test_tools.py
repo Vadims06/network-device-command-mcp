@@ -74,3 +74,66 @@ def test_vrf_detail_tool_maps_to_semantic_operation():
     asyncio.run(tools.get_vrf_detail(["router1"], "session-1"))
 
     assert client.calls == [("get_vrf_detail", ["router1"], None, "session-1")]
+
+
+def test_bgp_summary_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_bgp_summary(["router1"], "session-1"))
+
+    assert client.calls == [("get_bgp_summary", ["router1"], None, "session-1")]
+
+
+def test_bgp_neighbor_detail_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_bgp_neighbor_detail(["router1"], "session-1"))
+
+    assert client.calls == [("get_bgp_neighbor_detail", ["router1"], None, "session-1")]
+
+
+def test_isis_neighbors_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_isis_neighbors(["router1"], "session-1"))
+
+    assert client.calls == [("get_isis_neighbors", ["router1"], None, "session-1")]
+
+
+def test_isis_interface_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_isis_interface(["router1"], "session-1"))
+
+    assert client.calls == [("get_isis_interface", ["router1"], None, "session-1")]
+
+
+def test_isis_database_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_isis_database(["router1"], "session-1"))
+
+    assert client.calls == [("get_isis_database", ["router1"], None, "session-1")]
+
+
+def test_mpls_forwarding_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_mpls_forwarding(["router1"], "session-1"))
+
+    assert client.calls == [("get_mpls_forwarding", ["router1"], None, "session-1")]
+
+
+def test_ldp_neighbors_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_ldp_neighbors(["router1"], "session-1"))
+
+    assert client.calls == [("get_ldp_neighbors", ["router1"], None, "session-1")]
