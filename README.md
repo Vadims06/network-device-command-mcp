@@ -28,6 +28,8 @@ validation and vendor-neutral responses.
 | `get_ospf_interface` | `devices[]`, `interface` | OSPF state, cost, and timers on an interface |
 | `get_interface_status` | `devices[]`, `interface` | Admin/oper state, addresses, MTU, speed |
 | `get_route` | `devices[]`, `prefix` | Routing entries for one prefix |
+| `get_rsvp_lsps` | `devices[]` | RSVP-TE tunnel sessions (IOS XR) |
+| `get_vrf_detail` | `devices[]` | VRF inventory (IOS XR) |
 
 Every tool also takes an optional `request_id` used for correlation in the
 proxy's audit log. `devices` accepts 1–20 NetBox device names and results come

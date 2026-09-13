@@ -77,6 +77,22 @@ class DeviceCommandTools:
             "get_route", devices, {"prefix": prefix}, request_id
         )
 
+    async def get_rsvp_lsps(
+        self, devices: list[str], request_id: str = ""
+    ) -> dict[str, Any]:
+        """Return normalized RSVP-TE tunnel sessions for up to 20 devices."""
+        return await self._client.execute(
+            "get_rsvp_lsps", devices, request_id=request_id
+        )
+
+    async def get_vrf_detail(
+        self, devices: list[str], request_id: str = ""
+    ) -> dict[str, Any]:
+        """Return normalized VRF inventory for up to 20 devices."""
+        return await self._client.execute(
+            "get_vrf_detail", devices, request_id=request_id
+        )
+
 
 def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     verifier = StaticTokenVerifier(
@@ -97,6 +113,8 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     mcp.tool(tools.get_ospf_interface)
     mcp.tool(tools.get_ospf_status)
     mcp.tool(tools.get_route)
+    mcp.tool(tools.get_rsvp_lsps)
+    mcp.tool(tools.get_vrf_detail)
     return mcp
 
 

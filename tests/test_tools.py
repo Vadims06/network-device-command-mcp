@@ -56,3 +56,21 @@ def test_route_tool_maps_prefix_only():
             "",
         )
     ]
+
+
+def test_rsvp_lsps_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_rsvp_lsps(["router1"], "session-1"))
+
+    assert client.calls == [("get_rsvp_lsps", ["router1"], None, "session-1")]
+
+
+def test_vrf_detail_tool_maps_to_semantic_operation():
+    client = Client()
+    tools = DeviceCommandTools(client)
+
+    asyncio.run(tools.get_vrf_detail(["router1"], "session-1"))
+
+    assert client.calls == [("get_vrf_detail", ["router1"], None, "session-1")]
