@@ -15,18 +15,10 @@ class DeviceCommandTools:
     def __init__(self, client: ExecutionProxyClient):
         self._client = client
 
-    async def get_bgp_vrf_inventory(
-        self, devices: list[str], request_id: str = ""
-    ) -> dict[str, Any]:
-        """Return normalized BGP VRF inventory for up to 20 devices."""
-        return await self._client.execute(
-            "get_bgp_vrf_inventory", devices, request_id=request_id
-        )
-
     async def get_ospf_neighbors(
         self, devices: list[str], request_id: str = ""
     ) -> dict[str, Any]:
-        """Return normalized OSPF neighbors for up to 20 NetBox devices."""
+        """Return normalized OSPF neighbors for up to 20 devices."""
         return await self._client.execute(
             "get_ospf_neighbors", devices, request_id=request_id
         )
@@ -162,7 +154,6 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     )
     mcp = FastMCP("device-command", auth=verifier)
     tools = DeviceCommandTools(client)
-    mcp.tool(tools.get_bgp_vrf_inventory)
     mcp.tool(tools.get_ospf_neighbors)
     mcp.tool(tools.get_ospf_neighbor_detail)
     mcp.tool(tools.get_interface_status)

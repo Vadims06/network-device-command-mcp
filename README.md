@@ -1,69 +1,169 @@
 # network-device-command-mcp
 
-MCP server exposing read-only network diagnostics to LLM agents.
-
-It is a thin, deliberately dumb layer: each MCP tool maps 1:1 to one
-`network-device-command-proxy` operation. All validation, credentials, SSH, and vendor
-normalization live in the proxy — this repo adds only the MCP protocol surface
-and its bearer-token auth.
+MCP server that lets an LLM agent read live network-device state, read-only.
+Each MCP tool maps 1:1 to one operation of
+[network-device-command-proxy](https://github.com/Vadims06/network-device-command-proxy),
+which owns validation, credentials, SSH and vendor parsing. This repository adds
+only the MCP protocol surface and its bearer-token authentication.
 
 ```
 LLM agent ──MCP/HTTP──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
 ```
 
-This repository is the MCP adapter for
-[network-device-command-proxy](https://github.com/Vadims06/network-device-command-proxy). Read
-both READMEs when changing the shared operation contract: this server exposes
-the agent-facing tools, while the proxy owns inventory, credentials, SSH,
-validation and vendor-neutral responses.
+The agent can only call the fifteen tools below. It cannot send a CLI command,
+change configuration or see device credentials.
 
 ## Tools
 
-| Tool | Arguments | Purpose |
-|---|---|---|
-| `get_bgp_vrf_inventory` | `devices[]` | BGP VRF names, RD/RTs, and address families |
-| `get_ospf_neighbors` | `devices[]` | OSPF neighbor list and states |
-| `get_ospf_neighbor_detail` | `devices[]` | Neighbor states with area and flap counters |
-| `get_ospf_status` | `devices[]` | OSPF process and per-area status |
-| `get_ospf_interface` | `devices[]`, `interface` | OSPF state, cost, and timers on an interface |
-| `get_interface_status` | `devices[]`, `interface` | Admin/oper state, addresses, MTU, speed |
-| `get_route` | `devices[]`, `prefix` | Routing entries for one prefix |
-| `get_rsvp_lsps` | `devices[]` | RSVP-TE tunnel sessions (IOS XR) |
-| `get_vrf_detail` | `devices[]` | VRF inventory (IOS XR) |
-| `get_bgp_summary` | `devices[]` | BGP session summary per address family (IOS XR) |
-| `get_bgp_neighbor_detail` | `devices[]` | Detailed BGP neighbor state (IOS XR) |
-| `get_isis_neighbors` | `devices[]` | IS-IS adjacencies (IOS XR) |
-| `get_isis_interface` | `devices[]` | IS-IS per-interface state and per-level metrics (IOS XR) |
-| `get_isis_database` | `devices[]` | IS-IS LSDB summary, per level (IOS XR) |
-| `get_mpls_forwarding` | `devices[]` | MPLS label forwarding table (IOS XR) |
-| `get_ldp_neighbors` | `devices[]` | LDP session state (IOS XR) |
+Every tool takes `devices` (1–20 inventory names) and an optional `request_id`
+that is echoed back and written to the proxy audit log. Results come back per
+device, so one unreachable device does not fail the others.
 
-Every tool also takes an optional `request_id` used for correlation in the
-proxy's audit log. `devices` accepts 1–20 NetBox device names and results come
-back per device — one unreachable device does not fail the others.
+| Tool | Extra arguments | Platforms | Returns |
+|---|---|---|---|
+| `get_ospf_neighbors` | | FRR, Junos | OSPF neighbors, adjacency state, interface, dead timer |
+| `get_ospf_neighbor_detail` | | FRR, Junos | Neighbors plus area and state-change counter |
+| `get_ospf_interface` | `interface` | FRR, Junos | OSPF state, cost, timers, network type, neighbor counts |
+| `get_ospf_status` | | FRR, Junos | Router ID and per-area counters |
+| `get_interface_status` | `interface` | FRR, Junos | Admin/oper state, addresses, MTU, speed |
+| `get_route` | `prefix` | FRR, Junos | Routes matching one prefix, with next hops |
+| `get_rsvp_lsps` | | IOS XR | RSVP-TE sessions: explicit route, labels, FRR label, record route |
+| `get_vrf_detail` | | IOS XR | VRFs: route distinguisher, interfaces, import/export route targets |
+| `get_bgp_summary` | | IOS XR | BGP sessions per address family |
+| `get_bgp_neighbor_detail` | | IOS XR | Per-neighbor state, timers, message counters |
+| `get_isis_neighbors` | | IOS XR | IS-IS adjacencies |
+| `get_isis_interface` | | IOS XR | Per-interface IS-IS state, adjacency count and metric per level |
+| `get_isis_database` | | IOS XR | LSP summary per level |
+| `get_mpls_forwarding` | | IOS XR | MPLS label forwarding table |
+| `get_ldp_neighbors` | | IOS XR | LDP sessions |
 
-Returned field schemas are documented in the
-[network-device-command-proxy README](https://github.com/Vadims06/network-device-command-proxy/blob/main/README.md).
+A platform that does not implement a tool answers `unsupported_operation` for
+that device. The proxy also serves `get_ospf_interfaces` (all OSPF interfaces at
+once); it is not exposed as a tool.
 
-## Configuration
+The device commands behind each tool and a real response for each are in the
+proxy repository: see its
+[supported operations](https://github.com/Vadims06/network-device-command-proxy#what-is-supported)
+and [operations reference](https://github.com/Vadims06/network-device-command-proxy/blob/main/docs/operations.md).
+A tool returns the proxy's JSON unchanged, for example:
+
+```json
+{
+  "request_id": "",
+  "results": [
+    {
+      "device": "123.123.200.200",
+      "operation": "get_isis_neighbors",
+      "platform": "iosxr",
+      "status": "success",
+      "data": {
+        "instance": "test",
+        "neighbors": [
+          {"system_id": "R1_xe", "interface": "Gi0/0/0/0.115", "snpa": "fa16.3eff.4f49",
+           "state": "up", "holdtime_sec": 24, "circuit_type": "l1l2"}
+        ]
+      },
+      "duration_ms": 1,
+      "unsupported_fields": [],
+      "data_source": "fixture"
+    }
+  ]
+}
+```
+
+Fields an agent must read before drawing a conclusion: `status` and `error.code`
+per device, `unsupported_fields` (null because the vendor cannot report it, not
+because it is zero) and `data_source` (`live` or replayed `fixture`).
+
+## Install and run
+
+Requirements: Python 3.12+ and a running network-device-command-proxy.
+
+```bash
+python3.12 -m venv venv
+venv/bin/pip install -e .
+
+export EXECUTION_PROXY_URL=http://127.0.0.1:8080
+export EXECUTION_PROXY_TOKEN=<the proxy's EXECUTION_PROXY_TOKEN>
+export DEVICE_COMMAND_MCP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+
+venv/bin/fastmcp run device_command_mcp/server.py:create_server --transport http --port 8000
+```
 
 | Variable | Meaning |
 |---|---|
-| `EXECUTION_PROXY_URL` | Base URL of network-device-command-proxy, e.g. `http://execution-proxy:8080` |
+| `EXECUTION_PROXY_URL` | Base URL of the proxy, for example `http://127.0.0.1:8080` |
 | `EXECUTION_PROXY_TOKEN` | Bearer token the proxy expects |
-| `DEVICE_COMMAND_MCP_TOKEN` | Bearer token clients must present to this server; requires scope `device:read` |
+| `DEVICE_COMMAND_MCP_TOKEN` | Bearer token MCP clients must present to this server (scope `device:read`) |
 
-## Run
+All three are required; a missing one stops the process at startup. Tokens come
+from the environment only.
+
+The MCP endpoint is `http://<host>:8000/mcp`. Bind it to a trusted interface and
+put TLS in front of it before exposing it beyond localhost.
+
+### Docker
 
 ```bash
-pip install -e .
-fastmcp run device_command_mcp/server.py:create_server --transport http --port 8000
+docker build -t network-device-command-mcp .
+docker run --rm -p 127.0.0.1:8000:8000 \
+  -e EXECUTION_PROXY_URL -e EXECUTION_PROXY_TOKEN -e DEVICE_COMMAND_MCP_TOKEN \
+  network-device-command-mcp
 ```
 
-The image runs the same entrypoint unprivileged as uid 2001 on port 8000.
+The image runs unprivileged as uid 2001 on port 8000.
+
+## Connect a client
+
+Claude Code:
+
+```bash
+claude mcp add --transport http device-command http://127.0.0.1:8000/mcp \
+  --header "Authorization: Bearer $DEVICE_COMMAND_MCP_TOKEN"
+```
+
+Any other MCP client that supports streamable HTTP needs the same two things:
+the `/mcp` URL and the `Authorization: Bearer` header. With the `fastmcp`
+package installed:
+
+```python
+import asyncio
+from fastmcp import Client
+
+async def main():
+    async with Client("http://127.0.0.1:8000/mcp", auth="<DEVICE_COMMAND_MCP_TOKEN>") as client:
+        result = await client.call_tool("get_isis_neighbors", {"devices": ["123.123.200.200"]})
+        print(result.data)
+
+asyncio.run(main())
+```
+
+## Try it without devices
+
+The proxy ships fixture devices that replay captured IOS XR output. Start the
+proxy as described in its
+[Try it without devices](https://github.com/Vadims06/network-device-command-proxy#try-it-without-devices),
+start this server as above, and call any of the IS-IS, BGP, VRF, MPLS, LDP or
+RSVP tools against `123.123.31.31`, `123.123.100.100` or `123.123.200.200`.
+Results carry `data_source: "fixture"`.
+
+## Runbook for agents
+
+[docs/runbook.md](docs/runbook.md) tells an agent how to use these tools to
+diagnose a lost OSPF or IS-IS adjacency and a broken BGP/MPLS service: which tool
+to call first, what each field means, when to stop. It can be pasted into an
+agent's system prompt.
 
 ## Tests
 
 ```bash
-pytest tests -q
+venv/bin/pip install pytest
+venv/bin/pytest tests -q
 ```
+
+Tests inject a fake client and never contact a proxy. See [AGENTS.md](AGENTS.md)
+if an AI agent is working on this repository.
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE).
