@@ -34,9 +34,11 @@ Only after the operation exists in `network-device-command-proxy`.
 1. Add an `async def` to `DeviceCommandTools` whose parameters mirror the
    proxy's operation arguments, plus `request_id: str = ""`.
 2. Register it in `build_mcp()` with `mcp.tool(tools.<name>)`.
-3. Add a test to `tests/test_tools.py` asserting the exact `(operation,
-   devices, arguments)` tuple forwarded to a fake client.
-4. Update the tool table in `README.md`.
+3. Update the tool table in `README.md`.
+
+`tests/test_proxy_parity.py` already proves the tool forwards the right
+operation and arguments; it also fails if an operation of the installed proxy
+has no tool, so there is no per-tool test to add.
 
 ```python
 async def get_route(self, devices: list[str], prefix: str, request_id: str = "") -> dict[str, Any]:

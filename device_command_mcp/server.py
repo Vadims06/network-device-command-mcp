@@ -42,6 +42,14 @@ class DeviceCommandTools:
             request_id,
         )
 
+    async def get_ospf_interfaces(
+        self, devices: list[str], request_id: str = ""
+    ) -> dict[str, Any]:
+        """Return normalized OSPF state, cost and timers for every OSPF interface."""
+        return await self._client.execute(
+            "get_ospf_interfaces", devices, request_id=request_id
+        )
+
     async def get_ospf_interface(
         self, devices: list[str], interface: str, request_id: str = ""
     ) -> dict[str, Any]:
@@ -157,6 +165,7 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     mcp.tool(tools.get_ospf_neighbors)
     mcp.tool(tools.get_ospf_neighbor_detail)
     mcp.tool(tools.get_interface_status)
+    mcp.tool(tools.get_ospf_interfaces)
     mcp.tool(tools.get_ospf_interface)
     mcp.tool(tools.get_ospf_status)
     mcp.tool(tools.get_route)

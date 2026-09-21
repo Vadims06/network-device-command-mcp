@@ -11,6 +11,14 @@ dependencies = [
     "httpx==0.28.1",
 ]
 
+[project.optional-dependencies]
+# The proxy is imported by tests/test_proxy_parity.py to learn which
+# operations exist; it is never used at runtime.
+test = [
+    "pytest",
+    "network-device-command-proxy @ git+https://github.com/Vadims06/network-device-command-proxy.git@main",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

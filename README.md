@@ -10,7 +10,7 @@ only the MCP protocol surface and its bearer-token authentication.
 LLM agent ──MCP/HTTP──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
 ```
 
-The agent can only call the fifteen tools below. It cannot send a CLI command,
+The agent can only call the sixteen tools below. It cannot send a CLI command,
 change configuration or see device credentials.
 
 ## Tools
@@ -23,7 +23,8 @@ device, so one unreachable device does not fail the others.
 |---|---|---|---|
 | `get_ospf_neighbors` | | FRR, Junos | OSPF neighbors, adjacency state, interface, dead timer |
 | `get_ospf_neighbor_detail` | | FRR, Junos | Neighbors plus area and state-change counter |
-| `get_ospf_interface` | `interface` | FRR, Junos | OSPF state, cost, timers, network type, neighbor counts |
+| `get_ospf_interfaces` | | FRR, Junos | Every OSPF interface: state, cost, timers, network type, neighbor counts |
+| `get_ospf_interface` | `interface` | FRR, Junos | The same for one interface |
 | `get_ospf_status` | | FRR, Junos | Router ID and per-area counters |
 | `get_interface_status` | `interface` | FRR, Junos | Admin/oper state, addresses, MTU, speed |
 | `get_route` | `prefix` | FRR, Junos | Routes matching one prefix, with next hops |
@@ -38,8 +39,7 @@ device, so one unreachable device does not fail the others.
 | `get_ldp_neighbors` | | IOS XR | LDP sessions |
 
 A platform that does not implement a tool answers `unsupported_operation` for
-that device. The proxy also serves `get_ospf_interfaces` (all OSPF interfaces at
-once); it is not exposed as a tool.
+that device.
 
 The device commands behind each tool and a real response for each are in the
 proxy repository: see its
@@ -157,11 +157,13 @@ agent's system prompt.
 ## Tests
 
 ```bash
-venv/bin/pip install pytest
+venv/bin/pip install -e ".[test]"
 venv/bin/pytest tests -q
 ```
 
-Tests inject a fake client and never contact a proxy. See [AGENTS.md](AGENTS.md)
+Tests inject a fake client and never contact a proxy. `tests/test_proxy_parity.py`
+reads the operations of the installed network-device-command-proxy and fails if
+any has no tool here, or a tool has no operation, so the two stay in step. See [AGENTS.md](AGENTS.md)
 if an AI agent is working on this repository.
 
 ## License
