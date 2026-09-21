@@ -140,12 +140,13 @@ asyncio.run(main())
 
 ## Try it without devices
 
-The proxy ships fixture devices that replay captured IOS XR output. Start the
-proxy as described in its
+The proxy ships fixture devices that replay captured FRR and IOS XR output.
+Start the proxy as described in its
 [Try it without devices](https://github.com/Vadims06/network-device-command-proxy#try-it-without-devices),
-start this server as above, and call any of the IS-IS, BGP, VRF, MPLS, LDP or
-RSVP tools against `123.123.31.31`, `123.123.100.100` or `123.123.200.200`.
-Results carry `data_source: "fixture"`.
+start this server as above, and call the OSPF, interface and route tools against
+`123.10.10.10`, `123.30.30.30` or `123.14.14.14`, and the IS-IS, BGP, VRF, MPLS,
+LDP or RSVP tools against `123.123.31.31`, `123.123.100.100` or
+`123.123.200.200`. Results carry `data_source: "fixture"`.
 
 ## Runbook for agents
 
