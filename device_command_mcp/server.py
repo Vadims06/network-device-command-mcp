@@ -154,6 +154,15 @@ class DeviceCommandTools:
             "get_ldp_neighbors", devices, request_id=request_id
         )
 
+    async def get_evpn_vnis(
+        self, devices: list[str], request_id: str = ""
+    ) -> dict[str, Any]:
+        """Return the EVPN VNIs each device carries: L2/L3 VNI, tenant VRF,
+        local VTEP, the remote VTEPs of an L2 VNI."""
+        return await self._client.execute(
+            "get_evpn_vnis", devices, request_id=request_id
+        )
+
 
 def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     verifier = StaticTokenVerifier(
@@ -183,6 +192,7 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     mcp.tool(tools.get_isis_database, annotations=READ_ONLY)
     mcp.tool(tools.get_mpls_forwarding, annotations=READ_ONLY)
     mcp.tool(tools.get_ldp_neighbors, annotations=READ_ONLY)
+    mcp.tool(tools.get_evpn_vnis, annotations=READ_ONLY)
     return mcp
 
 

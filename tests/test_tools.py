@@ -134,6 +134,6 @@ def test_every_tool_is_marked_read_only_for_clients_that_gate_calls():
     mcp = build_mcp(Client(), "token")
     tools = asyncio.run(mcp.list_tools())
 
-    assert len(tools) == 16
+    assert len(tools) == 17
     assert all(tool.annotations and tool.annotations.readOnlyHint is True for tool in tools)
     assert all(tool.annotations.destructiveHint is False for tool in tools)

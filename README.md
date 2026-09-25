@@ -10,7 +10,7 @@ only the MCP protocol surface and its bearer-token authentication.
 LLM agent ──MCP/HTTP──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
 ```
 
-The agent can only call the sixteen tools below. It cannot send a CLI command,
+The agent can only call the seventeen tools below. It cannot send a CLI command,
 change configuration or see device credentials.
 
 ## Tools
@@ -37,6 +37,7 @@ device, so one unreachable device does not fail the others.
 | `get_isis_database` | | IOS XR | LSP summary per level |
 | `get_mpls_forwarding` | | IOS XR | MPLS label forwarding table |
 | `get_ldp_neighbors` | | IOS XR | LDP sessions |
+| `get_evpn_vnis` | | FRR | EVPN VNIs: L2/L3 VNI, tenant VRF, local and remote VTEPs |
 
 A platform that does not implement a tool answers `unsupported_operation` for
 that device.
