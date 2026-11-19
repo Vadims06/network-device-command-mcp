@@ -7,8 +7,13 @@ from typing import Any
 
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
+from mcp.types import ToolAnnotations
 
 from device_command_mcp.client import ExecutionProxyClient
+
+
+# Clients such as Codex cancel tool calls that do not declare themselves read-only.
+READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True)
 
 
 class DeviceCommandTools:
@@ -149,6 +154,15 @@ class DeviceCommandTools:
             "get_ldp_neighbors", devices, request_id=request_id
         )
 
+    async def get_evpn_vnis(
+        self, devices: list[str], request_id: str = ""
+    ) -> dict[str, Any]:
+        """Return the EVPN VNIs each device carries: L2/L3 VNI, tenant VRF,
+        local VTEP, the remote VTEPs of an L2 VNI."""
+        return await self._client.execute(
+            "get_evpn_vnis", devices, request_id=request_id
+        )
+
 
 def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     verifier = StaticTokenVerifier(
@@ -162,22 +176,23 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     )
     mcp = FastMCP("device-command", auth=verifier)
     tools = DeviceCommandTools(client)
-    mcp.tool(tools.get_ospf_neighbors)
-    mcp.tool(tools.get_ospf_neighbor_detail)
-    mcp.tool(tools.get_interface_status)
-    mcp.tool(tools.get_ospf_interfaces)
-    mcp.tool(tools.get_ospf_interface)
-    mcp.tool(tools.get_ospf_status)
-    mcp.tool(tools.get_route)
-    mcp.tool(tools.get_rsvp_lsps)
-    mcp.tool(tools.get_vrf_detail)
-    mcp.tool(tools.get_bgp_summary)
-    mcp.tool(tools.get_bgp_neighbor_detail)
-    mcp.tool(tools.get_isis_neighbors)
-    mcp.tool(tools.get_isis_interface)
-    mcp.tool(tools.get_isis_database)
-    mcp.tool(tools.get_mpls_forwarding)
-    mcp.tool(tools.get_ldp_neighbors)
+    mcp.tool(tools.get_ospf_neighbors, annotations=READ_ONLY)
+    mcp.tool(tools.get_ospf_neighbor_detail, annotations=READ_ONLY)
+    mcp.tool(tools.get_interface_status, annotations=READ_ONLY)
+    mcp.tool(tools.get_ospf_interfaces, annotations=READ_ONLY)
+    mcp.tool(tools.get_ospf_interface, annotations=READ_ONLY)
+    mcp.tool(tools.get_ospf_status, annotations=READ_ONLY)
+    mcp.tool(tools.get_route, annotations=READ_ONLY)
+    mcp.tool(tools.get_rsvp_lsps, annotations=READ_ONLY)
+    mcp.tool(tools.get_vrf_detail, annotations=READ_ONLY)
+    mcp.tool(tools.get_bgp_summary, annotations=READ_ONLY)
+    mcp.tool(tools.get_bgp_neighbor_detail, annotations=READ_ONLY)
+    mcp.tool(tools.get_isis_neighbors, annotations=READ_ONLY)
+    mcp.tool(tools.get_isis_interface, annotations=READ_ONLY)
+    mcp.tool(tools.get_isis_database, annotations=READ_ONLY)
+    mcp.tool(tools.get_mpls_forwarding, annotations=READ_ONLY)
+    mcp.tool(tools.get_ldp_neighbors, annotations=READ_ONLY)
+    mcp.tool(tools.get_evpn_vnis, annotations=READ_ONLY)
     return mcp
 
 
