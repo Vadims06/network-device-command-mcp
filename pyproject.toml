@@ -11,6 +11,9 @@ dependencies = [
     "httpx==0.28.1",
 ]
 
+[project.scripts]
+device-command-mcp = "device_command_mcp.server:main"
+
 [project.optional-dependencies]
 # The proxy is imported by tests/test_proxy_parity.py to learn which
 # operations exist; it is never used at runtime.
