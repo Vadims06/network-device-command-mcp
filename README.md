@@ -4,10 +4,11 @@ MCP server that lets an LLM agent read live network-device state, read-only.
 Each MCP tool maps 1:1 to one operation of
 [network-device-command-proxy](https://github.com/Vadims06/network-device-command-proxy),
 which owns validation, credentials, SSH and vendor parsing. This repository adds
-only the MCP protocol surface and its bearer-token authentication.
+only the MCP protocol surface, over stdio or over HTTP with bearer-token
+authentication.
 
 ```
-LLM agent ──MCP/HTTP──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
+LLM agent ──MCP (stdio or HTTP)──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
 ```
 
 The agent can only call the seventeen tools below. It cannot send a CLI command,
@@ -83,22 +84,56 @@ Requirements: Python 3.12+ and a running network-device-command-proxy.
 ```bash
 python3.12 -m venv venv
 venv/bin/pip install -e .
+```
 
+The MCP client starts the server itself over stdio: no port and no MCP token.
+Use HTTP only when several clients share one server.
+
+| Variable | Meaning |
+|---|---|
+| `EXECUTION_PROXY_URL` | Base URL of the proxy, for example `http://127.0.0.1:8080` |
+| `EXECUTION_PROXY_TOKEN` | Bearer token the proxy expects |
+| `DEVICE_COMMAND_MCP_TOKEN` | HTTP only: bearer token MCP clients must present to this server (scope `device:read`) |
+
+A missing variable stops the process at startup. Tokens come from the
+environment only.
+
+## Connect a client over stdio
+
+Claude Code:
+
+```bash
+claude mcp add device-command \
+  -e EXECUTION_PROXY_URL=http://127.0.0.1:8080 \
+  -e EXECUTION_PROXY_TOKEN="$EXECUTION_PROXY_TOKEN" \
+  -- "$PWD/venv/bin/device-command-mcp"
+```
+
+OpenClaw:
+
+```bash
+openclaw mcp add device-command \
+  --command "$PWD/venv/bin/device-command-mcp" \
+  --env EXECUTION_PROXY_URL=http://127.0.0.1:8080 \
+  --env EXECUTION_PROXY_TOKEN="$EXECUTION_PROXY_TOKEN"
+openclaw mcp doctor device-command --probe
+```
+
+Both store the proxy token in the client's configuration. That token allows
+only the read-only operations listed above, the same ones the MCP tools call.
+To keep device passwords away from an agent on the same host, see
+[Same host as the agent](https://github.com/Vadims06/network-device-command-proxy#same-host-as-the-agent)
+in the proxy README.
+
+## Run over HTTP
+
+```bash
 export EXECUTION_PROXY_URL=http://127.0.0.1:8080
 export EXECUTION_PROXY_TOKEN=<the proxy's EXECUTION_PROXY_TOKEN>
 export DEVICE_COMMAND_MCP_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 
 venv/bin/fastmcp run device_command_mcp/server.py:create_server --transport http --port 8000
 ```
-
-| Variable | Meaning |
-|---|---|
-| `EXECUTION_PROXY_URL` | Base URL of the proxy, for example `http://127.0.0.1:8080` |
-| `EXECUTION_PROXY_TOKEN` | Bearer token the proxy expects |
-| `DEVICE_COMMAND_MCP_TOKEN` | Bearer token MCP clients must present to this server (scope `device:read`) |
-
-All three are required; a missing one stops the process at startup. Tokens come
-from the environment only.
 
 The MCP endpoint is `http://<host>:8000/mcp`. Bind it to a trusted interface and
 put TLS in front of it before exposing it beyond localhost.
@@ -114,7 +149,7 @@ docker run --rm -p 127.0.0.1:8000:8000 \
 
 The image runs unprivileged as uid 2001 on port 8000.
 
-## Connect a client
+### Connect a client over HTTP
 
 Claude Code:
 

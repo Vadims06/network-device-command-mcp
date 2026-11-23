@@ -164,16 +164,18 @@ class DeviceCommandTools:
         )
 
 
-def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
-    verifier = StaticTokenVerifier(
-        tokens={
-            bearer_token: {
-                "client_id": "device-command-client",
-                "scopes": ["device:read"],
-            }
-        },
-        required_scopes=["device:read"],
-    )
+def build_mcp(client: ExecutionProxyClient, bearer_token: str | None) -> FastMCP:
+    verifier = None
+    if bearer_token is not None:
+        verifier = StaticTokenVerifier(
+            tokens={
+                bearer_token: {
+                    "client_id": "device-command-client",
+                    "scopes": ["device:read"],
+                }
+            },
+            required_scopes=["device:read"],
+        )
     mcp = FastMCP("device-command", auth=verifier)
     tools = DeviceCommandTools(client)
     mcp.tool(tools.get_ospf_neighbors, annotations=READ_ONLY)
@@ -196,9 +198,17 @@ def build_mcp(client: ExecutionProxyClient, bearer_token: str) -> FastMCP:
     return mcp
 
 
-def create_server() -> FastMCP:
-    client = ExecutionProxyClient(
+def build_proxy_client() -> ExecutionProxyClient:
+    return ExecutionProxyClient(
         os.environ["EXECUTION_PROXY_URL"],
         os.environ["EXECUTION_PROXY_TOKEN"],
     )
-    return build_mcp(client, os.environ["DEVICE_COMMAND_MCP_TOKEN"])
+
+
+def create_server() -> FastMCP:
+    return build_mcp(build_proxy_client(), os.environ["DEVICE_COMMAND_MCP_TOKEN"])
+
+
+def main() -> None:
+    """stdio needs no MCP token: the client starts this process and owns its pipes."""
+    build_mcp(build_proxy_client(), None).run(transport="stdio", show_banner=False)
