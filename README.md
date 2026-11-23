@@ -4,7 +4,8 @@ MCP server that lets an LLM agent read live network-device state, read-only.
 Each MCP tool maps 1:1 to one operation of
 [network-device-command-proxy](https://github.com/Vadims06/network-device-command-proxy),
 which owns validation, credentials, SSH and vendor parsing. This repository adds
-only the MCP protocol surface and its bearer-token authentication.
+only the MCP protocol surface, over stdio or over HTTP with bearer-token
+authentication.
 
 ```
 LLM agent ──MCP (stdio or HTTP)──▶ network-device-command-mcp ──HTTP──▶ network-device-command-proxy ──SSH──▶ devices
@@ -120,8 +121,9 @@ openclaw mcp doctor device-command --probe
 
 Both store the proxy token in the client's configuration. That token allows
 only the read-only operations listed above, the same ones the MCP tools call.
-To keep device passwords away from an agent on the same host, see the proxy's
-README, section "Same host as the agent".
+To keep device passwords away from an agent on the same host, see
+[Same host as the agent](https://github.com/Vadims06/network-device-command-proxy#same-host-as-the-agent)
+in the proxy README.
 
 ## Run over HTTP
 
